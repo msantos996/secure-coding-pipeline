@@ -1,0 +1,25 @@
+# Ambiente virtual Python
+.venv/
+
+# Variáveis de ambiente e segredos
+.env
+.env.*
+
+# Logs e ficheiros temporários
+*.log
+juiceshop.log
+
+# Relatórios gerados pelo pipeline
+output/
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# VS Code
+.vscode/
+
+# Claude Code
+.claude/settings.local.json
