@@ -10,8 +10,9 @@
 *.log
 juiceshop.log
 
-# Relatórios gerados pelo pipeline
-output/
+# Relatórios gerados pelo pipeline (ficheiros, não o módulo)
+output/*.md
+output/*.json
 
 # Cache Python
 __pycache__/
