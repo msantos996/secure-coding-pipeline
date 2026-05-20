@@ -316,12 +316,15 @@ def remediate(finding: dict, provider: LLMProvider) -> dict[str, Any]:
         user_msg  = _build_user_message(finding)
         raw_text  = provider.complete(user_msg)
 
-        # Extrair JSON da resposta (alguns modelos adicionam markdown ```json)
+        # Extrair JSON da resposta — suporta: JSON puro, ```json...```, ```...```
         json_text = raw_text.strip()
-        if json_text.startswith("```"):
-            json_text = json_text.split("```")[1]
-            if json_text.startswith("json"):
-                json_text = json_text[4:]
+        if "```" in json_text:
+            # Extrai o conteudo entre o primeiro ``` e o ultimo ```
+            inner = json_text.split("```", 1)[1].rsplit("```", 1)[0]
+            # Remove linguagem opcional (json, JSON, etc.)
+            if inner.lstrip().startswith(("json", "JSON")):
+                inner = inner.lstrip()[4:]
+            json_text = inner.strip()
 
         parsed = json.loads(json_text)
         result["explanation"] = parsed.get("explanation", "")
