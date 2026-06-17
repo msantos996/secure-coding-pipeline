@@ -10,17 +10,53 @@ Miguel Ângelo Ferreira dos Santos — TICM 2024–25, Universidade da Maia
 
 ## Índice
 
-1. [Como funciona](#como-funciona)
-2. [Instalação](#instalação)
-3. [Configuração do LLM](#configuração-do-llm)
-4. [Usar com a tua aplicação](#usar-com-a-tua-aplicação)
+1. [Início rápido](#início-rápido)
+2. [Como funciona](#como-funciona)
+3. [Instalação](#instalação)
+4. [Configuração do LLM](#configuração-do-llm)
+5. [Usar com a tua aplicação](#usar-com-a-tua-aplicação)
    - [Semgrep (SAST)](#semgrep-sast)
    - [Snyk (SCA)](#snyk-sca)
    - [OWASP ZAP (DAST)](#owasp-zap-dast)
    - [SonarQube / SonarCloud (SAST)](#sonarqube--sonarcloud-sast)
-5. [Correr o pipeline](#correr-o-pipeline)
-6. [Ler o relatório](#ler-o-relatório)
-7. [Modo demo (OWASP Juice Shop)](#modo-demo-owasp-juice-shop)
+6. [Correr o pipeline](#correr-o-pipeline)
+7. [Ler o relatório](#ler-o-relatório)
+8. [Modo demo (OWASP Juice Shop)](#modo-demo-owasp-juice-shop)
+
+---
+
+## Início rápido
+
+Do clone ao relatório em 5 passos. Usa **apenas o Semgrep** como exemplo (gratuito, sem conta).
+
+```bash
+# 1. Clonar e instalar
+git clone https://github.com/msantos996/secure-coding-pipeline.git
+cd secure-coding-pipeline
+python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+
+# 2. Configurar o LLM (escolhe um provider)
+cp .env.example .env
+# Edita o .env com a tua API key
+
+# 3. Analisar a tua aplicação com o Semgrep
+pip install semgrep
+semgrep scan --config "p/owasp-top-ten" --sarif --output semgrep_report.sarif /caminho/da/tua/app
+
+# 4. Correr o pipeline
+python pipeline.py --semgrep semgrep_report.sarif --app "Nome da Tua App"
+
+# 5. Ler o relatório
+# output/report.md  ← abre no VS Code com Ctrl+Shift+V
+# output/report.json ← dados completos em JSON
+```
+
+> **Sem API key?** Usa `--no-llm` para correr só o parse + dedup sem custos:
+> `python pipeline.py --semgrep semgrep_report.sarif --no-llm`
+
+> **Quer testar primeiro?** Usa o modo demo com dados do OWASP Juice Shop incluídos:
+> `python pipeline.py --demo --no-llm`
 
 ---
 

@@ -80,6 +80,7 @@ Exemplos:
     p.add_argument("--no-llm",    action="store_true",        help="Saltar fase LLM")
     p.add_argument("--severity",  metavar="LEVEL",            help="Severidade minima: CRITICAL|HIGH|MEDIUM|LOW|INFO")
     p.add_argument("--output",    metavar="DIR", default="output", help="Diretorio de output (default: output/)")
+    p.add_argument("--app",       metavar="NAME",                  help="Nome da aplicacao (aparece no titulo do relatorio)")
     return p.parse_args()
 
 
@@ -198,7 +199,8 @@ def main() -> None:
 
     # ── Fase 4: Relatorio ──────────────────────
     print("\n=== FASE 4: RELATORIO ===")
-    save_markdown(findings, remediations, metrics, str(output / "report.md"))
+    app_name = args.app or ("OWASP Juice Shop" if args.demo else "")
+    save_markdown(findings, remediations, metrics, str(output / "report.md"), app_name=app_name)
     save_json(findings, remediations, metrics, str(output / "report.json"))
 
     ok = n_llm

@@ -57,17 +57,21 @@ def save_markdown(
     remediations: list[dict],
     metrics: dict,
     output_path: str,
+    app_name: str = "",
 ) -> None:
     """Gera relatorio legivel em Markdown."""
     rem_by_id = {r["finding_id"]: r for r in remediations}
     lines: list[str] = []
 
     # ── Cabecalho ──────────────────────────────
+    title = f"Relatorio de Seguranca — {app_name}" if app_name else "Relatorio de Seguranca"
+    sources = sorted({f.get("source", "") for f in findings if f.get("source")})
+    tools_str = " · ".join(sources) if sources else "SonarQube · Semgrep · Snyk · OWASP ZAP"
     lines += [
-        "# Relatorio de Seguranca — OWASP Juice Shop",
+        f"# {title}",
         "",
         f"**Data:** {datetime.now().strftime('%Y-%m-%d %H:%M')}  ",
-        f"**Ferramentas:** SonarQube · Semgrep · Snyk · OWASP ZAP  ",
+        f"**Ferramentas:** {tools_str}  ",
     ]
     if remediations:
         provider = remediations[0].get("provider", "")
