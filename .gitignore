@@ -10,7 +10,7 @@
 *.log
 juiceshop.log
 
-# Relatórios gerados pelo pipeline (ficheiros, não o módulo)
+# Relatórios e checkpoints gerados pelo pipeline (ficheiros, não o módulo)
 output/*.md
 output/*.json
 

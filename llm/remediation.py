@@ -340,19 +340,46 @@ def remediate(finding: dict, provider: LLMProvider) -> dict[str, Any]:
     return result
 
 
+def _load_checkpoint(path: str) -> dict[str, Any]:
+    """Carrega checkpoint de remediações parciais do disco."""
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+            print(f"[LLM] Checkpoint carregado: {len(data)} findings ja processados de '{path}'")
+            return data
+    except FileNotFoundError:
+        return {}
+    except Exception as exc:
+        print(f"[LLM] Aviso: nao foi possivel ler checkpoint '{path}': {exc}")
+        return {}
+
+
+def _save_checkpoint(path: str, done: dict[str, Any]) -> None:
+    """Persiste o progresso actual no ficheiro de checkpoint."""
+    try:
+        import os
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(done, fh, ensure_ascii=False, indent=2)
+    except Exception as exc:
+        print(f"[LLM] Aviso: nao foi possivel guardar checkpoint: {exc}")
+
+
 def remediate_all(
     findings: list[dict],
     provider: LLMProvider | None = None,
     max_findings: int | None = None,
+    checkpoint_path: str | None = None,
 ) -> list[dict[str, Any]]:
     """
     Processa uma lista de findings e retorna as remediações.
 
     Parametros
     ----------
-    findings     : lista de findings normalizados
-    provider     : provider LLM (se None, usa get_provider())
-    max_findings : limitar o numero de findings processados (util para testes)
+    findings         : lista de findings normalizados
+    provider         : provider LLM (se None, usa get_provider())
+    max_findings     : limitar o numero de findings processados (util para testes)
+    checkpoint_path  : ficheiro JSON para guardar progresso (resume automatico se existir)
 
     Retorna
     -------
@@ -362,21 +389,38 @@ def remediate_all(
         provider = get_provider()
 
     subset = findings[:max_findings] if max_findings else findings
-    results = []
+
+    # Carregar checkpoint (progresso anterior)
+    done: dict[str, Any] = {}
+    if checkpoint_path:
+        done = _load_checkpoint(checkpoint_path)
+
+    to_process = [f for f in subset if f.get("id") not in done]
+    skipped    = len(subset) - len(to_process)
 
     print(f"[LLM] Provider: {provider.name} / Modelo: {provider.model}")
-    print(f"[LLM] A processar {len(subset)} findings...")
+    if skipped:
+        print(f"[LLM] Retomando: {skipped} findings ja processados, {len(to_process)} em falta")
+    else:
+        print(f"[LLM] A processar {len(to_process)} findings...")
 
-    for i, finding in enumerate(subset, 1):
-        print(f"[LLM] ({i}/{len(subset)}) {finding.get('title', '')[:60]}", end=" ... ")
+    for i, finding in enumerate(to_process, 1):
+        total_pending = len(to_process)
+        print(f"[LLM] ({i}/{total_pending}) {finding.get('title', '')[:60]}", end=" ... ")
         rem = remediate(finding, provider)
         if rem["error"]:
             print(f"ERRO: {rem['error']}")
         else:
             print("OK")
-        results.append(rem)
 
-    ok    = sum(1 for r in results if not r["error"])
+        done[finding["id"]] = rem
+
+        if checkpoint_path:
+            _save_checkpoint(checkpoint_path, done)
+
+    results = [done[f["id"]] for f in subset if f.get("id") in done]
+
+    ok    = sum(1 for r in results if not r.get("error"))
     fails = len(results) - ok
     print(f"[LLM] Concluido: {ok} OK, {fails} erros")
     return results

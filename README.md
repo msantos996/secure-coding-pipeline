@@ -83,7 +83,7 @@ python -m venv .venv
 source .venv/bin/activate
 
 # 3. Instalar dependências
-pip install semgrep anthropic openai python-dotenv
+pip install -r requirements.txt
 ```
 
 ---
@@ -306,11 +306,16 @@ python pipeline.py --demo --no-llm
 Para recriar o ambiente de teste com o Juice Shop a correr localmente:
 
 ```bash
-# Windows
+# Windows — setup (só na primeira vez)
 setup_juiceshop.bat
 
-# Arrancar após setup
-cd ..\juice-shop
-npx tsx app.ts
+# Windows — arrancar / parar
+start_juiceshop.bat
+stop_services.bat
+
+# Linux / macOS — arrancar / parar
+chmod +x start_juiceshop.sh stop_services.sh
+./start_juiceshop.sh
+./stop_services.sh
 # Disponível em http://localhost:3000
 ```

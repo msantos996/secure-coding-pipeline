@@ -1,0 +1,4 @@
+anthropic>=0.103.0
+python-dotenv>=1.0.0
+# openai>=1.0.0   # descomentar se usar LLM_PROVIDER=openai
+# semgrep>=1.0.0  # descomentar se quiser correr scans Semgrep localmente

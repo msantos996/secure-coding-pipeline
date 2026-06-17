@@ -26,6 +26,7 @@ Opcoes adicionais:
 
 import argparse
 import sys
+import time
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -130,12 +131,16 @@ def main() -> None:
     output = Path(args.output)
     output.mkdir(exist_ok=True)
 
+    t_start = time.time()
+
     # ── Fase 1: Parsing ────────────────────────
     print("\n=== FASE 1: PARSING ===")
+    t0 = time.time()
     findings_raw = []
     for tool, path in scans.items():
         if path:
             findings_raw += PARSERS[tool](path)
+    t_parse = time.time() - t0
 
     if not findings_raw:
         print("Nenhum finding encontrado nos ficheiros fornecidos.")
@@ -143,9 +148,11 @@ def main() -> None:
 
     # ── Fase 2: Deduplicacao ───────────────────
     print("\n=== FASE 2: DEDUPLICACAO ===")
+    t0 = time.time()
     result   = deduplicate(findings_raw)
     findings = result["findings"]
     metrics  = result["metrics"]
+    t_dedup  = time.time() - t0
 
     if args.severity:
         sev = args.severity.upper()
@@ -160,29 +167,53 @@ def main() -> None:
 
     # ── Fase 3: LLM ───────────────────────────
     remediations: list[dict] = []
+    t_llm = 0.0
 
     if args.no_llm:
         print("\n=== FASE 3: LLM (saltada) ===")
     else:
         print("\n=== FASE 3: REMEDIACAO LLM ===")
+        t0 = time.time()
+        checkpoint = str(output / "llm_checkpoint.json")
         try:
             provider = get_provider()
-            remediations = remediate_all(findings, provider, max_findings=args.max)
+            remediations = remediate_all(findings, provider, max_findings=args.max, checkpoint_path=checkpoint)
         except RuntimeError as e:
             print(f"[LLM] AVISO: {e}")
             print("[LLM] A gerar relatorio sem remediações LLM.")
             print("[LLM] Configura o ficheiro .env para ativar esta fase.")
+        t_llm = time.time() - t0
+
+    t_total = time.time() - t_start
+
+    # ── Adicionar metricas de tempo ────────────
+    n_llm = len([r for r in remediations if not r.get("error")])
+    metrics["timing"] = {
+        "t_parse_s":          round(t_parse, 2),
+        "t_dedup_s":          round(t_dedup, 2),
+        "t_llm_s":            round(t_llm, 2),
+        "t_total_s":          round(t_total, 2),
+        "t_llm_per_finding_s": round(t_llm / n_llm, 2) if n_llm else None,
+    }
 
     # ── Fase 4: Relatorio ──────────────────────
     print("\n=== FASE 4: RELATORIO ===")
     save_markdown(findings, remediations, metrics, str(output / "report.md"))
     save_json(findings, remediations, metrics, str(output / "report.json"))
 
-    ok = len([r for r in remediations if not r.get("error")])
+    ok = n_llm
+    t = metrics["timing"]
     print(f"\n=== CONCLUIDO ===")
-    print(f"  Findings unicos : {metrics['unique_count']}")
-    print(f"  Remediações LLM : {ok}")
-    print(f"  Relatorio       : {output}/report.md")
+    print(f"  Findings unicos  : {metrics['unique_count']}")
+    print(f"  Remediações LLM  : {ok}")
+    print(f"  Relatorio        : {output}/report.md")
+    print(f"\n=== TEMPOS (dissertacao) ===")
+    print(f"  Parse            : {t['t_parse_s']}s")
+    print(f"  Dedup            : {t['t_dedup_s']}s")
+    print(f"  LLM total        : {t['t_llm_s']}s")
+    if t["t_llm_per_finding_s"] is not None:
+        print(f"  LLM por finding  : {t['t_llm_per_finding_s']}s")
+    print(f"  Total pipeline   : {t['t_total_s']}s")
 
 
 if __name__ == "__main__":

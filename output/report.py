@@ -109,6 +109,25 @@ def save_markdown(
         lines.append(f"| {src} | {tool_type.get(src, '')} | {count} |")
     lines.append("")
 
+    timing = metrics.get("timing")
+    if timing:
+        lines += [
+            "**Tempos de execucao:**",
+            "",
+            "| Fase | Tempo (s) |",
+            "|---|---|",
+            f"| Parsing | {timing.get('t_parse_s', '-')} |",
+            f"| Deduplicacao | {timing.get('t_dedup_s', '-')} |",
+            f"| LLM (total) | {timing.get('t_llm_s', '-')} |",
+        ]
+        per = timing.get("t_llm_per_finding_s")
+        if per is not None:
+            lines.append(f"| LLM (por finding) | {per} |")
+        lines += [
+            f"| Total pipeline | {timing.get('t_total_s', '-')} |",
+            "",
+        ]
+
     # ── Findings por severidade ────────────────
     lines.append("---")
     lines.append("")
