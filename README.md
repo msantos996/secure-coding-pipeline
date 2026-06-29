@@ -4,7 +4,7 @@ Pipeline Python que agrega relatórios de ferramentas de segurança (SAST, DAST,
 deduplica findings e gera remediações automáticas via LLM.
 
 **Projeto de Mestrado** — Implementação de Secure Coding no Desenvolvimento Web  
-Miguel Ângelo Ferreira dos Santos — TICM 2024–25, Universidade da Maia
+Miguel Ângelo Ferreira dos Santos — TICM 2025–26, Universidade da Maia
 
 ---
 
