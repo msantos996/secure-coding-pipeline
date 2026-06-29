@@ -1,0 +1,14 @@
+# Credenciais e configs sensíveis
+.env
+*.key
+secrets/
+
+# Outputs gerados (não precisam de contexto)
+output/
+*.log
+
+# Cache Python
+__pycache__/
+*.pyc
+.venv/
+venv/

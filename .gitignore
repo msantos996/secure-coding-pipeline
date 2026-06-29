@@ -26,3 +26,13 @@ __pycache__/
 # Claude Code
 .claude/
 CLAUDE.md
+
+# Scripts auxiliares e documentos de dissertação (uso local)
+find_candidates.py
+show_metrics.py
+METRICAS_DISSERTACAO.md
+ANEXOS_DISSERTACAO.md
+
+# Amostras de desenvolvimento (substituídas pelos dados Juice Shop)
+samples/*_report.json
+samples/*_report.sarif
